@@ -6,9 +6,7 @@ const _ = require("lodash");
 export default async function handler(req, res) {
   const validToken = process.env.VALIDATION_TOKEN === req.query.token;
 
-  console.log(validToken);
-
-  /* if (validToken) {
+  if (validToken) {
     let lastMonth = new Date().getMonth() - 1;
     let year = new Date().getFullYear();
     if (lastMonth === 0) {
@@ -172,5 +170,5 @@ export default async function handler(req, res) {
     return res.status(200).json(receiptsByCompany);
   } else {
     res.status(401).json("Not authorized");
-  } */
+  }
 }
