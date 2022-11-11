@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SequelizeMeta {
+  name String @id @db.VarChar(255)
+}
+
+model archives {
+  id            String      @id @unique @default(cuid())
+  name          String?
+  thumbnail     String?
+  data          String?
+  partner_id    String
+  partner       companies   @relation(fields: [partner_id], references: [id])
+  plantation_id String
+  plantation    plantations @relation(fields: [plantation_id], references: [id])
+  type          String?
+  keywords      String?
+  deleted_at    DateTime?
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @default(now())
+}
+
+model companies {
+  id                            String        @id @unique @default(cuid())
+  name                          String
+  email                         String        @unique
+  cpfcnpj                       String?       @unique
+  street                        String
+  number                        String?
+  complement                    String?
+  city                          String?
+  state                         String?
+  district                      String?
+  cep                           String?
+  phone                         String
+  site                          String?
+  role                          String
+  code                          String?
+  api_address                   String?
+  access_token                  String?
+  refresh_token                 String?
+  date_expiration_access_token  DateTime?
+  date_expiration_refresh_token DateTime?
+  date_activated                DateTime?
+  store_id                      String?
+  logo                          String?
+  deleted_at                    DateTime?
+  created_at                    DateTime      @default(now())
+  updated_at                    DateTime      @default(now())
+  nsid                          String?
+  nstoken                       String?
+  percentage                    Decimal       @default(1)
+  fees                          Decimal       @default(0)
+  penalty                       Decimal       @default(0)
+  observations                  String?
+  users                         User[]        @relation("id")
+  receipts                      receipts[]
+  handler                       handler[]
+  archives                      archives[]
+  plantations                   plantations[]
+
+  @@unique([id, cpfcnpj])
+}
+
+model plantations {
+  id           String     @id @unique @default(cuid())
+  date         DateTime   @default(now())
+  geolocation  Json
+  planted      Boolean    @default(false)
+  description  String?
+  external     String?
+  partner_id   String?
+  partner      companies? @relation(fields: [partner_id], references: [id])
+  receipts     receipts[]
+  handler      handler[]
+  archives     archives[]
+  tree_value   Int        @default(2500)
+  observations String?
+  deleted_at   DateTime?
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @default(now())
+}
+
+model handler {
+  id            String      @id @unique @default(cuid())
+  company       companies   @relation(fields: [company_id], references: [id])
+  company_id    String
+  plantations   plantations @relation(fields: [plantation_id], references: [id])
+  plantation_id String
+  value         Int
+}
+
+model receipts {
+  id            String       @id @unique @default(cuid())
+  date          DateTime?
+  paid          Boolean      @default(false)
+  value         Int
+  company_id    String
+  plantation_id String?
+  observations  String?
+  company       companies    @relation(fields: [company_id], references: [id])
+  plantations   plantations? @relation(fields: [plantation_id], references: [id])
+  order_id      String?
+  vendor        String?      @default("Interno")
+  paid_at       DateTime?
+  due_at        DateTime?
+  deleted_at    DateTime?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @default(now())
+  logs          Logs[]
+}
+
+model User {
+  id               String     @id @unique @default(cuid())
+  name             String?
+  password         String?
+  image            String?    @default("/images/default_user.jpg")
+  email            String     @unique
+  emailVerified    DateTime?
+  role             String     @default("User")
+  carbonPercentage Int        @default(2)
+  company_id       String?
+  sessions         Session[]
+  company          companies? @relation("id", fields: [company_id, company_cnpj], references: [id, cpfcnpj])
+  company_cnpj     String?
+  deleted_at       DateTime?
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @default(now())
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Logs {
+  id          String   @id @unique @default(cuid())
+  receipt     receipts @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  content     Json
+  receiptId   String
+  value       String
+  status      Boolean
+  event       String
+  owner       String?
+  description String?
+  created_at  DateTime @default(now())
+}
