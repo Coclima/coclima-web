@@ -94,11 +94,27 @@ export default async function handler(req, res) {
     },
   });
 
-  console.log(existingCompany);
+  const existingEmailCompany = await prisma.companies.findFirst({
+    where: {
+      email: email,
+    },
+  });
+
+  console.log(existingCompany === null && existingEmailCompany === null);
 
   let company = existingCompany;
 
-  if (existingCompany === null) {
+  let companyId = null;
+
+  if (existingCompany !== null) {
+    companyId = existingCompany.id;
+  }
+
+  if (existingEmailCompany !== null) {
+    companyId = existingEmailCompany.id;
+  }
+
+  if (existingCompany === null && existingEmailCompany === null) {
     company = await prisma.companies.create({
       data: {
         name: name,
@@ -115,7 +131,7 @@ export default async function handler(req, res) {
   } else {
     company = await prisma.companies.update({
       where: {
-        id: existingCompany.id,
+        id: companyId,
       },
       data: {
         nsid: String(store_id),
